@@ -19,11 +19,11 @@ pub fn init(parent: anytype) Label {
     return .{ .obj = c.lv_label_create(parent.obj).? };
 }
 
-pub fn setText(self: Label, text: [*:0]const u8) void {
+pub fn setText(self: Label, text: [:0]const u8) void {
     c.lv_label_set_text(self.obj, text);
 }
 // TODO: ??? lv_label_set_text_fmt
-pub fn setTextStatic(self: Label, text: [*:0]const u8) void {
+pub fn setTextStatic(self: Label, text: [:0]const u8) void {
     c.lv_label_set_text_static(self.obj, text);
 }
 
@@ -75,7 +75,7 @@ pub fn getTextSelectionEnd(self: Label) u32 {
     return c.lv_label_get_text_selection_end(self.obj);
 }
 
-pub fn insText(self: Label, pos: u32, text: [*:0]const u8) void {
+pub fn insText(self: Label, pos: u32, text: [:0]const u8) void {
     c.lv_label_ins_text(self.obj, pos, text);
 }
 

@@ -1,3 +1,4 @@
+const std = @import("std");
 const lv = @import("lv.zig");
 const c = lv.c;
 
@@ -5,81 +6,35 @@ const Obj = @This();
 
 obj: *c.lv_obj_t,
 
-pub const States = struct {
-    pub const Default: u16 = c.LV_STATE_DEFAULT;
-    pub const Checked: u16 = c.LV_STATE_CHECKED;
-    pub const Focused: u16 = c.LV_STATE_FOCUSED;
-    pub const FocusKey: u16 = c.LV_STATE_FOCUS_KEY;
-    pub const Edited: u16 = c.LV_STATE_EDITED;
-    pub const Hovered: u16 = c.LV_STATE_HOVERED;
-    pub const Pressed: u16 = c.LV_STATE_PRESSED;
-    pub const Scrolled: u16 = c.LV_STATE_SCROLLED;
-    pub const Disabled: u16 = c.LV_STATE_DISABLED;
-    pub const User1: u16 = c.LV_STATE_USER_1;
-    pub const User2: u16 = c.LV_STATE_USER_2;
-    pub const User3: u16 = c.LV_STATE_USER_3;
-    pub const User4: u16 = c.LV_STATE_USER_4;
-    pub const Any: u16 = c.LV_STATE_ANY;
+const Error = error{
+    MissMatchCallback,
 };
 
-pub fn assign(o: *c.lv_obj_t) Obj {
-    return .{
-        .obj = o,
-    };
-}
+pub const State = enum(u16) {
+    Default = c.LV_STATE_DEFAULT,
+    Checked = c.LV_STATE_CHECKED,
+    Focused = c.LV_STATE_FOCUSED,
+    FocusKey = c.LV_STATE_FOCUS_KEY,
+    Edited = c.LV_STATE_EDITED,
+    Hovered = c.LV_STATE_HOVERED,
+    Pressed = c.LV_STATE_PRESSED,
+    Scrolled = c.LV_STATE_SCROLLED,
+    Disabled = c.LV_STATE_DISABLED,
+    User1 = c.LV_STATE_USER_1,
+    User2 = c.LV_STATE_USER_2,
+    User3 = c.LV_STATE_USER_3,
+    User4 = c.LV_STATE_USER_4,
+    Any = c.LV_STATE_ANY,
 
-pub fn init(parent: anytype) Obj {
-    return .{
-        .obj = c.lv_obj_create(parent.obj).?,
-    };
-}
+    pub fn integer(states: []const State) u16 {
+        var value: u16 = 0;
+        for (states) |state| {
+            value |= @intFromEnum(state);
+        }
 
-pub fn del(self: Obj) void {
-    c.lv_obj_del(self.obj);
-}
-
-pub fn getChildCnt(self: Obj) u32 {
-    return c.lv_obj_get_child_cnt(self.obj);
-}
-
-pub fn getChild(self: Obj, idx: u32) ?Obj {
-    return if (c.lv_obj_get_child(self.obj, @as(i32, @intCast(idx)))) |obj| .{ .obj = obj } else null;
-}
-
-pub fn setSize(self: Obj, width: i16, height: i16) void {
-    c.lv_obj_set_size(self.obj, width, height);
-}
-
-pub fn setHeight(self: Obj, height: i16) void {
-    c.lv_obj_set_height(self.obj, height);
-}
-
-pub fn setWidth(self: Obj, width: i16) void {
-    c.lv_obj_set_width(self.obj, width);
-}
-
-pub fn setPos(self: Obj, x: i16, y: i16) void {
-    c.lv_obj_set_pos(self.obj, x, y);
-}
-
-pub fn center(self: Obj) void {
-    c.lv_obj_center(self.obj);
-}
-
-pub fn getParent(self: Obj, comptime type_: type) ?type_ {
-    return if (c.lv_obj_get_parent(self.obj)) |obj|
-        return type_{ .obj = obj }
-    else
-        null;
-}
-
-pub fn setAlign(self: Obj, align_: lv.Align, x_ofs: lv.Coord, y_ofs: lv.Coord) void {
-    c.lv_obj_align(self.obj, @intFromEnum(align_), x_ofs, y_ofs);
-}
-
-pub fn setAlignTo(self: Obj, base: anytype, align_: lv.Align, x_ofs: lv.Coord, y_ofs: lv.Coord) void {
-    c.lv_obj_align_to(self.obj, base.obj, @intFromEnum(align_), x_ofs, y_ofs);
-}
+        return value;
+    }
+};
 
 pub const Flag = enum(u32) {
     Hidden = c.LV_OBJ_FLAG_HIDDEN,
@@ -113,134 +68,192 @@ pub const Flag = enum(u32) {
     USER_2 = c.LV_OBJ_FLAG_USER_2,
     USER_3 = c.LV_OBJ_FLAG_USER_3,
     USER_4 = c.LV_OBJ_FLAG_USER_4,
+
+    pub fn integer(flags: []const Flag) u32 {
+        var value: u32 = 0;
+        for (flags) |flag| {
+            value |= @intFromEnum(flag);
+        }
+
+        return value;
+    }
 };
 
-// flags
-pub fn addFlag(self: Obj, flag: Flag) void {
-    c.lv_obj_add_flag(self.obj, @intFromEnum(flag));
+pub fn init(parent: anytype) Obj {
+    return .{
+        .obj = c.lv_obj_create(parent.obj).?,
+    };
 }
 
-pub fn clearFlag(self: Obj, flag: Flag) void {
-    c.lv_obj_clear_flag(self.obj, @intFromEnum(flag));
-}
-
-// styles
-pub const StyleSelector = enum(u32) {
-    Main = c.LV_PART_MAIN,
-    Scrollbar = c.LV_PART_SCROLLBAR,
-    Indicator = c.LV_PART_INDICATOR,
-    Knob = c.LV_PART_KNOB,
-    Selected = c.LV_PART_SELECTED,
-    Items = c.LV_PART_ITEMS,
-    Ticks = c.LV_PART_TICKS,
-    Cursor = c.LV_PART_CURSOR,
-
-    CustomFirst = c.LV_PART_CUSTOM_FIRST,
-
-    Any = c.LV_PART_ANY,
-    _,
-};
-pub fn removeStyle(self: Obj, style: ?*anyopaque, selector: StyleSelector) void {
-    _ = style;
-    c.lv_obj_remove_style(self.obj, null, @intFromEnum(selector));
-}
-
-pub const BaseDir = enum(u8) {
-    Ltr = c.LV_BASE_DIR_LTR,
-    Rtl = c.LV_BASE_DIR_RTL,
-    Auto = c.LV_BASE_DIR_AUTO,
-
-    Neutral = c.LV_BASE_DIR_NEUTRAL,
-    Weak = c.LV_BASE_DIR_WEAK,
-    _,
-};
-
-pub fn setStyleBaseDir(self: Obj, value: BaseDir, selector: StyleSelector) void {
-    c.lv_obj_set_style_base_dir(self.obj, @intFromEnum(value), @intFromEnum(selector));
-}
-
-// state
-pub fn addState(self: Obj, state: u16) void {
-    c.lv_obj_add_state(self.obj, state);
-}
-
-pub fn clearState(self: Obj, state: u16) void {
-    c.lv_obj_clear_state(self.obj, state);
-}
-
-pub fn getState(self: Obj) u16 {
-    return c.lv_obj_get_state(self.obj);
-}
-
-pub fn hasState(self: Obj, state: u16) bool {
-    return c.lv_obj_has_state(self.obj, state);
-}
-
-pub fn flex(self: Obj) lv.Flex {
-    return lv.Flex{ .obj = self.obj };
-}
+pub usingnamespace Functions(Obj);
 
 pub fn Functions(comptime Self: type) type {
     return struct {
-        pub fn toObj(self: Self) Obj {
-            return Obj{ .obj = self.obj };
+        pub usingnamespace lv.Style.ObjFunctions(Self);
+
+        pub fn assign(o: *c.lv_obj_t) Self {
+            return .{ .obj = o };
+        }
+
+        pub fn as(self: Self, comptime Other: type) Other {
+            return .{ .obj = self.obj };
+        }
+
+        pub fn asObj(self: Self) Obj {
+            return .{ .obj = self.obj };
+        }
+
+        pub fn del(self: Self) void {
+            c.lv_obj_del(self.obj);
+        }
+
+        pub fn setParent(self: Self, parent: anytype) void {
+            c.lv_obj_set_parent(self.obj, parent.obj);
+        }
+
+        pub fn getChildCnt(self: Self) u32 {
+            return c.lv_obj_get_child_cnt(self.obj);
+        }
+
+        pub fn getChild(self: Self, idx: u32) ?Obj {
+            return if (c.lv_obj_get_child(self.obj, @as(i32, @intCast(idx)))) |obj| .{ .obj = obj } else null;
         }
 
         pub fn setSize(self: Self, width: i16, height: i16) void {
-            (Obj{ .obj = self.obj }).setSize(width, height);
+            c.lv_obj_set_size(self.obj, width, height);
+        }
+
+        pub fn setHeight(self: Self, height: i16) void {
+            c.lv_obj_set_height(self.obj, height);
+        }
+
+        pub fn setWidth(self: Self, width: i16) void {
+            c.lv_obj_set_width(self.obj, width);
         }
 
         pub fn setPos(self: Self, x: i16, y: i16) void {
-            (Obj{ .obj = self.obj }).setPos(x, y);
+            c.lv_obj_set_pos(self.obj, x, y);
         }
 
         pub fn center(self: Self) void {
-            (Obj{ .obj = self.obj }).center();
+            c.lv_obj_center(self.obj);
+        }
+
+        pub fn getParent(self: Self, comptime Parent: type) ?Parent {
+            return if (c.lv_obj_get_parent(self.obj)) |obj|
+                return .{ .obj = obj }
+            else
+                null;
+        }
+
+        pub fn setAlign(self: Self, align_: lv.Align, x_ofs: lv.Coord, y_ofs: lv.Coord) void {
+            c.lv_obj_align(self.obj, @intFromEnum(align_), x_ofs, y_ofs);
+        }
+
+        pub fn setAlignTo(self: Self, base: anytype, align_: lv.Align, x_ofs: lv.Coord, y_ofs: lv.Coord) void {
+            c.lv_obj_align_to(self.obj, base.obj, @intFromEnum(align_), x_ofs, y_ofs);
+        }
+
+        // flag
+        pub fn addFlag(self: Self, flag: Obj.Flag) void {
+            c.lv_obj_add_flag(self.obj, @intFromEnum(flag));
+        }
+
+        pub fn addFlags(self: Self, flags: []const Obj.Flag) void {
+            c.lv_obj_add_flag(self.obj, Obj.Flag.integer(flags));
+        }
+
+        pub fn clearFlag(self: Self, flag: Obj.Flag) void {
+            c.lv_obj_clear_flag(self.obj, @intFromEnum(flag));
+        }
+
+        pub fn clearFlags(self: Self, flags: []const Obj.Flag) void {
+            c.lv_obj_clear_flag(self.obj, Obj.Flag.integer(flags));
         }
 
         // state
-        pub fn addObjState(self: Self, state: u16) void {
-            (Obj{ .obj = self.obj }).addState(state);
+        pub fn addState(self: Self, state: Obj.State) void {
+            c.lv_obj_add_state(self.obj, @intFromEnum(state));
         }
 
-        pub fn clearObjState(self: Self, state: u16) void {
-            (Obj{ .obj = self.obj }).clearState(state);
+        pub fn addStates(self: Self, states: []const Obj.State) void {
+            c.lv_obj_add_state(self.obj, Obj.State.integer(states));
         }
 
-        pub fn getObjState(self: Self) u16 {
-            return (Obj{ .obj = self.obj }).getState();
+        pub fn clearState(self: Self, state: Obj.State) void {
+            c.lv_obj_clear_state(self.obj, @intFromEnum(state));
         }
 
-        pub fn hasObjState(self: Self, state: u16) bool {
-            return (Obj{ .obj = self.obj }).hasState(state);
+        pub fn clearStates(self: Self, states: []const Obj.State) void {
+            c.lv_obj_clear_state(self.obj, Obj.State.integer(states));
         }
 
-        fn generateWrapper(comptime callbacks: type, comptime name: []const u8) fn (?*c.lv_event_t) callconv(.C) void {
+        pub fn getState(self: Self) u16 {
+            return c.lv_obj_get_state(self.obj);
+        }
+
+        pub fn hasState(self: Self, state: Obj.State) bool {
+            return c.lv_obj_has_state(self.obj, @intFromEnum(state));
+        }
+
+        pub fn flex(self: Self) lv.Flex {
+            return lv.Flex{ .obj = self.obj };
+        }
+
+        fn generateWrapper(comptime callback: anytype, comptime UserDataType: type) lv.Event.Callback {
             return struct {
                 fn f(e: ?*c.lv_event_t) callconv(.C) void {
-                    @field(callbacks, name)(Self{ .obj = e.?.target.? });
+                    const EventType = lv.Event.ThisEvent(Self, UserDataType);
+                    const this_event = EventType{ .event = .{ .e = e.? } };
+
+                    callback(this_event);
                 }
             }.f;
         }
 
-        // event callbacks
-        pub fn addEventCallback(self: Self, comptime callbacks: type) void {
-            const events = .{
-                .{ "onPressed", c.LV_EVENT_PRESSED },
-                .{ "onPressing", c.LV_EVENT_PRESSING },
-                .{ "onPressLost", c.LV_EVENT_PRESS_LOST },
-                .{ "onShortClicked", c.LV_EVENT_SHORT_CLICKED },
-                .{ "onLongPressed", c.LV_EVENT_LONG_PRESSED },
-                .{ "onLongPressedRepeat", c.LV_EVENT_LONG_PRESSED_REPEAT },
-                .{ "onClicked", c.LV_EVENT_CLICKED },
-                .{ "onReleased", c.LV_EVENT_RELEASED },
-                .{ "onValueChanged", c.LV_EVENT_VALUE_CHANGED },
-            };
-            inline for (events) |event| {
-                if (comptime @hasDecl(callbacks, event.@"0")) {
-                    _ = c.lv_obj_add_event_cb(self.obj, generateWrapper(callbacks, event.@"0"), event.@"1", null);
+        pub fn addEventCallback(self: Self, user_data: anytype, comptime Callback: type) ?lv.Event.Callback {
+            const UserDataType = @TypeOf(user_data);
+            var the_user_data: ?*anyopaque = if (UserDataType != @TypeOf(null))
+                @constCast(@ptrCast(user_data))
+            else
+                null;
+
+            inline for (std.meta.fields(lv.Event.Code)) |field| {
+                const callback_name = "on" ++ field.name;
+                if (@hasDecl(Callback, callback_name)) {
+                    const callback = @field(Callback, callback_name);
+                    const wrapper = generateWrapper(callback, UserDataType);
+                    _ = c.lv_obj_add_event_cb(self.obj, wrapper, field.value, the_user_data);
+                    return wrapper;
                 }
             }
+
+            return null;
+        }
+
+        pub fn addEventCallbacks(self: Self, user_data: anytype, comptime Callbacks: type) usize {
+            var added_count: usize = 0;
+            const UserDataType = @TypeOf(user_data);
+            var the_user_data: ?*anyopaque = if (UserDataType != @TypeOf(null))
+                @constCast(@ptrCast(user_data))
+            else
+                null;
+
+            inline for (std.meta.fields(lv.Event.Code)) |field| {
+                const callback_name = "on" ++ field.name;
+                if (@hasDecl(Callbacks, callback_name)) {
+                    const callback = @field(Callbacks, callback_name);
+                    const wrapper = generateWrapper(callback, UserDataType);
+                    _ = c.lv_obj_add_event_cb(self.obj, wrapper, field.value, the_user_data);
+                    added_count += 1;
+                }
+            }
+
+            return added_count;
+        }
+
+        pub fn removeEventCallback(self: Self, callback: ?lv.Event.Callback) bool {
+            return c.lv_obj_remove_event_cb(self.obj, callback);
         }
     };
 }

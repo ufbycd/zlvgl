@@ -108,8 +108,8 @@ pub fn build(b: *std.build.Builder) !void {
     const config_addr = b.option(usize, "config_addr", "only for direct use as dependency") orelse 0;
     const config: ?*Config = if (config_addr == 0) null else @as(*Config, @ptrFromInt(config_addr));
 
-    const lv_drivers = b.dependency("lv_drivers", .{});
-    const lvgl = b.dependency("lvgl", .{});
+    //     const lv_drivers = b.dependency("lv_drivers", .{});
+    // const lvgl = b.dependency("lvgl", .{});
 
     const lib = b.addStaticLibrary(.{
         .name = "lvgl",
@@ -118,14 +118,10 @@ pub fn build(b: *std.build.Builder) !void {
         .link_libc = true,
     });
 
-    const module = b.addModule("zlvgl", .{
-        .source_file = .{ .path = "src/lv.zig" },
-    });
+    const module = b.addModule("zlvgl", .{ .source_file = .{ .path = "src/lv.zig" } });
 
     try addDependencies(b, lib, .{
         .zlvgl = module,
-        .lvgl = lvgl,
-        .lv_drivers = lv_drivers,
     }, if (config) |c| c else &Config{
         .driver = driver,
         .gpu = gpu,
@@ -134,7 +130,7 @@ pub fn build(b: *std.build.Builder) !void {
 
     const exe = b.addExecutable(.{
         .name = "example",
-        .root_source_file = .{ .path = "src/examples/main.zig" },
+        .root_source_file = .{ .path = "examples/main.zig" },
         .target = target,
         .optimize = optimize,
     });
@@ -157,17 +153,15 @@ pub fn build(b: *std.build.Builder) !void {
 
 pub fn addDependencies(b: *std.build.Builder, lib: *std.build.LibExeObjStep, modules: struct {
     zlvgl: *std.Build.Module,
-    lvgl: *std.Build.Dependency,
-    lv_drivers: *std.Build.Dependency,
 }, config: *const Config) !void {
-    const lvgl = modules.lvgl;
-    const lv_drivers = modules.lv_drivers;
+    //     const lvgl = modules.lvgl;
+    //     const lv_drivers = modules.lv_drivers;
 
     lib.linkLibC();
 
-    lib.addIncludePath(.{ .path = b.pathFromRoot("configs") });
-    lib.addIncludePath(lvgl.path(""));
-    lib.addIncludePath(lv_drivers.path(""));
+    lib.addIncludePath(.{ .path = "configs" });
+    lib.addIncludePath(.{ .path = "lvgl" });
+    lib.addIncludePath(.{ .path = "lv_drivers" });
 
     const options = b.addOptions();
     lib.step.dependOn(&options.step);
@@ -317,20 +311,20 @@ pub fn addDependencies(b: *std.build.Builder, lib: *std.build.LibExeObjStep, mod
 
     switch (config.driver) {
         .Gtk => {
-            lib.addCSourceFile(.{ .file = lv_drivers.path("gtkdrv/gtkdrv.c"), .flags = &cflags });
+            lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/gtkdrv/gtkdrv.c" }, .flags = &cflags });
         },
         .FbDev => {
-            lib.addCSourceFile(.{ .file = lv_drivers.path("display/fbdev.c"), .flags = &cflags });
+            lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/display/fbdev.c" }, .flags = &cflags });
         },
         .Sdl => {
             switch (gpu) {
                 .Sdl => {
-                    lib.addCSourceFile(.{ .file = lv_drivers.path("sdl/sdl_gpu.c"), .flags = &cflags });
-                    lib.addCSourceFile(.{ .file = lv_drivers.path("sdl/sdl_common.c"), .flags = &cflags });
+                    lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/sdl/sdl_gpu.c" }, .flags = &cflags });
+                    lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/sdl/sdl_common.c" }, .flags = &cflags });
                 },
                 .Software => {
-                    lib.addCSourceFile(.{ .file = lv_drivers.path("sdl/sdl.c"), .flags = &cflags });
-                    lib.addCSourceFile(.{ .file = lv_drivers.path("sdl/sdl_common.c"), .flags = &cflags });
+                    lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/sdl/sdl.c" }, .flags = &cflags });
+                    lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/sdl/sdl_common.c" }, .flags = &cflags });
                 },
                 else => {
                     std.log.err("Invalid gpu for SDL driver", .{});
@@ -340,160 +334,163 @@ pub fn addDependencies(b: *std.build.Builder, lib: *std.build.LibExeObjStep, mod
         },
     }
 
-    lib.addCSourceFile(.{ .file = lv_drivers.path("indev/evdev.c"), .flags = &cflags });
+    lib.addCSourceFile(.{ .file = .{ .path = "lv_drivers/indev/evdev.c" }, .flags = &cflags });
 
-    const lvgl_draw_sw_source_files = [_]std.Build.LazyPath{
-        lvgl.path("src/draw/sw/lv_draw_sw.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_layer.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_transform.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_blend.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_arc.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_rect.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_letter.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_img.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_line.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_polygon.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_gradient.c"),
+    const lvgl_draw_sw_source_files = [_][]const u8{
+        "lvgl/src/draw/sw/lv_draw_sw.c",
+        "lvgl/src/draw/sw/lv_draw_sw_layer.c",
+        "lvgl/src/draw/sw/lv_draw_sw_transform.c",
+        "lvgl/src/draw/sw/lv_draw_sw_blend.c",
+        "lvgl/src/draw/sw/lv_draw_sw_arc.c",
+        "lvgl/src/draw/sw/lv_draw_sw_rect.c",
+        "lvgl/src/draw/sw/lv_draw_sw_letter.c",
+        "lvgl/src/draw/sw/lv_draw_sw_img.c",
+        "lvgl/src/draw/sw/lv_draw_sw_line.c",
+        "lvgl/src/draw/sw/lv_draw_sw_polygon.c",
+        "lvgl/src/draw/sw/lv_draw_sw_gradient.c",
     };
 
-    const lvgl_draw_sdl_source_files = [_]std.Build.LazyPath{
-        lvgl.path("src/draw/sdl/lv_draw_sdl.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_bg.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_composite.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_utils.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_layer.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_mask.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_texture_cache.c"),
-        // lvgl.path("src/draw/sdl/lv_draw_sdl_transform.c"),
-        // lvgl.path("src/draw/sdl/lv_draw_sdl_blend.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_arc.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_rect.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_label.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_img.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_line.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_polygon.c"),
-        lvgl.path("src/draw/sdl/lv_draw_sdl_stack_blur.c"),
+    const lvgl_draw_sdl_source_files = [_][]const u8{
+        "lvgl/src/draw/sdl/lv_draw_sdl.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_bg.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_composite.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_utils.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_layer.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_mask.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_texture_cache.c",
+        // "lvgl/src/draw/sdl/lv_draw_sdl_transform.c",
+        // "lvgl/src/draw/sdl/lv_draw_sdl_blend.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_arc.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_rect.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_label.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_img.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_line.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_polygon.c",
+        "lvgl/src/draw/sdl/lv_draw_sdl_stack_blur.c",
 
         // sw components needed by SDL
-        lvgl.path("src/draw/sw/lv_draw_sw_blend.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_gradient.c"),
-        lvgl.path("src/draw/sw/lv_draw_sw_letter.c"),
+        "lvgl/src/draw/sw/lv_draw_sw_blend.c",
+        "lvgl/src/draw/sw/lv_draw_sw_gradient.c",
+        "lvgl/src/draw/sw/lv_draw_sw_letter.c",
     };
 
     switch (gpu) {
         .Software => {
-            for (lvgl_draw_sw_source_files) |f| {
-                lib.addCSourceFile(.{ .file = f, .flags = &cflags });
-            }
+            //             for (lvgl_draw_sw_source_files) |f| {
+            //                 lib.addCSourceFile(.{ .file = f, .flags = &cflags });
+            //             }
+            lib.addCSourceFiles(&lvgl_draw_sw_source_files, &cflags);
         },
         .Sdl => {
-            for (lvgl_draw_sdl_source_files) |f| {
-                lib.addCSourceFile(.{ .file = f, .flags = &cflags });
-            }
+            //             for (lvgl_draw_sdl_source_files) |f| {
+            //                 lib.addCSourceFile(.{ .file = f, .flags = &cflags });
+            //             }
+            lib.addCSourceFiles(&lvgl_draw_sdl_source_files, &cflags);
         },
         .Auto => unreachable,
     }
 
-    const lvgl_source_files = [_]std.Build.LazyPath{
+    const lvgl_source_files = [_][]const u8{
         // core
-        lvgl.path("src/core/lv_group.c"),
-        lvgl.path("src/core/lv_indev.c"),
-        lvgl.path("src/core/lv_indev_scroll.c"),
-        lvgl.path("src/core/lv_disp.c"),
-        lvgl.path("src/core/lv_theme.c"),
-        lvgl.path("src/core/lv_refr.c"),
-        lvgl.path("src/core/lv_obj.c"),
-        lvgl.path("src/core/lv_obj_class.c"),
-        lvgl.path("src/core/lv_obj_pos.c"),
-        lvgl.path("src/core/lv_obj_tree.c"),
-        lvgl.path("src/core/lv_obj_draw.c"),
-        lvgl.path("src/core/lv_obj_style.c"),
-        lvgl.path("src/core/lv_obj_style_gen.c"),
-        lvgl.path("src/core/lv_obj_scroll.c"),
-        lvgl.path("src/core/lv_event.c"),
+        "lvgl/src/core/lv_group.c",
+        "lvgl/src/core/lv_indev.c",
+        "lvgl/src/core/lv_indev_scroll.c",
+        "lvgl/src/core/lv_disp.c",
+        "lvgl/src/core/lv_theme.c",
+        "lvgl/src/core/lv_refr.c",
+        "lvgl/src/core/lv_obj.c",
+        "lvgl/src/core/lv_obj_class.c",
+        "lvgl/src/core/lv_obj_pos.c",
+        "lvgl/src/core/lv_obj_tree.c",
+        "lvgl/src/core/lv_obj_draw.c",
+        "lvgl/src/core/lv_obj_style.c",
+        "lvgl/src/core/lv_obj_style_gen.c",
+        "lvgl/src/core/lv_obj_scroll.c",
+        "lvgl/src/core/lv_event.c",
         //hal
-        lvgl.path("src/hal/lv_hal_indev.c"),
-        lvgl.path("src/hal/lv_hal_tick.c"),
-        lvgl.path("src/hal/lv_hal_disp.c"),
+        "lvgl/src/hal/lv_hal_indev.c",
+        "lvgl/src/hal/lv_hal_tick.c",
+        "lvgl/src/hal/lv_hal_disp.c",
         //draw
-        lvgl.path("src/draw/lv_draw.c"),
-        lvgl.path("src/draw/lv_draw_layer.c"),
-        lvgl.path("src/draw/lv_draw_transform.c"),
-        lvgl.path("src/draw/lv_draw_label.c"),
-        lvgl.path("src/draw/lv_draw_arc.c"),
-        lvgl.path("src/draw/lv_draw_rect.c"),
-        //comptime std.fmt.comptimePrint("{s}/{s}", .{ base,libs/ "lvgl/src/draw/lv_draw_blend.c" }),
-        lvgl.path("src/draw/lv_draw_mask.c"),
-        lvgl.path("src/draw/lv_draw_line.c"),
-        lvgl.path("src/draw/lv_draw_img.c"),
+        "lvgl/src/draw/lv_draw.c",
+        "lvgl/src/draw/lv_draw_layer.c",
+        "lvgl/src/draw/lv_draw_transform.c",
+        "lvgl/src/draw/lv_draw_label.c",
+        "lvgl/src/draw/lv_draw_arc.c",
+        "lvgl/src/draw/lv_draw_rect.c",
+        //comptime std.fmt.comptimePrint("{s}/{s}", .{ base,libs/ "lvgl/src/draw/lv_draw_blend.c" },
+        "lvgl/src/draw/lv_draw_mask.c",
+        "lvgl/src/draw/lv_draw_line.c",
+        "lvgl/src/draw/lv_draw_img.c",
 
-        lvgl.path("src/draw/lv_img_buf.c"),
-        lvgl.path("src/draw/lv_img_decoder.c"),
-        lvgl.path("src/draw/lv_img_cache.c"),
+        "lvgl/src/draw/lv_img_buf.c",
+        "lvgl/src/draw/lv_img_decoder.c",
+        "lvgl/src/draw/lv_img_cache.c",
 
         //misc
-        lvgl.path("src/misc/lv_gc.c"),
-        lvgl.path("src/misc/lv_utils.c"),
-        lvgl.path("src/misc/lv_fs.c"),
-        lvgl.path("src/misc/lv_color.c"),
-        lvgl.path("src/misc/lv_async.c"),
-        lvgl.path("src/misc/lv_area.c"),
-        lvgl.path("src/misc/lv_anim.c"),
-        lvgl.path("src/misc/lv_txt.c"),
-        lvgl.path("src/misc/lv_tlsf.c"),
-        lvgl.path("src/misc/lv_timer.c"),
-        lvgl.path("src/misc/lv_style.c"),
-        lvgl.path("src/misc/lv_ll.c"),
-        lvgl.path("src/misc/lv_log.c"),
-        lvgl.path("src/misc/lv_printf.c"),
-        lvgl.path("src/misc/lv_mem.c"),
-        lvgl.path("src/misc/lv_math.c"),
-        lvgl.path("src/misc/lv_style_gen.c"),
-        lvgl.path("src/misc/lv_lru.c"),
+        "lvgl/src/misc/lv_gc.c",
+        "lvgl/src/misc/lv_utils.c",
+        "lvgl/src/misc/lv_fs.c",
+        "lvgl/src/misc/lv_color.c",
+        "lvgl/src/misc/lv_async.c",
+        "lvgl/src/misc/lv_area.c",
+        "lvgl/src/misc/lv_anim.c",
+        "lvgl/src/misc/lv_txt.c",
+        "lvgl/src/misc/lv_tlsf.c",
+        "lvgl/src/misc/lv_timer.c",
+        "lvgl/src/misc/lv_style.c",
+        "lvgl/src/misc/lv_ll.c",
+        "lvgl/src/misc/lv_log.c",
+        "lvgl/src/misc/lv_printf.c",
+        "lvgl/src/misc/lv_mem.c",
+        "lvgl/src/misc/lv_math.c",
+        "lvgl/src/misc/lv_style_gen.c",
+        "lvgl/src/misc/lv_lru.c",
 
         // widgets
-        lvgl.path("src/widgets/lv_arc.c"),
-        lvgl.path("src/widgets/lv_btn.c"),
-        lvgl.path("src/widgets/lv_btnmatrix.c"),
-        lvgl.path("src/widgets/lv_bar.c"),
-        lvgl.path("src/widgets/lv_dropdown.c"),
-        lvgl.path("src/widgets/lv_textarea.c"),
-        lvgl.path("src/widgets/lv_checkbox.c"),
-        lvgl.path("src/widgets/lv_switch.c"),
-        lvgl.path("src/widgets/lv_roller.c"),
-        lvgl.path("src/widgets/lv_slider.c"),
-        lvgl.path("src/widgets/lv_table.c"),
-        lvgl.path("src/widgets/lv_img.c"),
-        lvgl.path("src/widgets/lv_label.c"),
-        lvgl.path("src/widgets/lv_line.c"),
+        "lvgl/src/widgets/lv_arc.c",
+        "lvgl/src/widgets/lv_btn.c",
+        "lvgl/src/widgets/lv_btnmatrix.c",
+        "lvgl/src/widgets/lv_bar.c",
+        "lvgl/src/widgets/lv_dropdown.c",
+        "lvgl/src/widgets/lv_textarea.c",
+        "lvgl/src/widgets/lv_checkbox.c",
+        "lvgl/src/widgets/lv_switch.c",
+        "lvgl/src/widgets/lv_roller.c",
+        "lvgl/src/widgets/lv_slider.c",
+        "lvgl/src/widgets/lv_table.c",
+        "lvgl/src/widgets/lv_img.c",
+        "lvgl/src/widgets/lv_label.c",
+        "lvgl/src/widgets/lv_line.c",
         // extra
-        lvgl.path("src/extra/lv_extra.c"),
-        lvgl.path("src/extra/widgets/tabview/lv_tabview.c"),
-        lvgl.path("src/extra/widgets/win/lv_win.c"),
-        lvgl.path("src/extra/widgets/msgbox/lv_msgbox.c"),
-        lvgl.path("src/extra/widgets/chart/lv_chart.c"),
-        lvgl.path("src/extra/widgets/spinner/lv_spinner.c"),
-        lvgl.path("src/extra/widgets/calendar/lv_calendar.c"),
-        lvgl.path("src/extra/widgets/calendar/lv_calendar_header_arrow.c"),
-        lvgl.path("src/extra/widgets/calendar/lv_calendar_header_dropdown.c"),
-        lvgl.path("src/extra/widgets/meter/lv_meter.c"),
-        lvgl.path("src/extra/widgets/keyboard/lv_keyboard.c"),
-        lvgl.path("src/extra/widgets/list/lv_list.c"),
-        lvgl.path("src/extra/widgets/menu/lv_menu.c"),
-        //"lvgl/src/extra/widgets/spinbox/lv_spinbox.c"}),
-        //"lvgl/src/extra/widgets/tileview/lv_tileview.c"}),
-        //"lvgl/src/extra/widgets/colorwheel/lv_colorwheel.c"}),
-        //"lvgl/src/extra/widgets/led/lv_led.c"}),
-        //"lvgl/src/extra/layouts/grid/lv_grid.c"}),
-        lvgl.path("src/extra/layouts/flex/lv_flex.c"),
-        lvgl.path("src/extra/themes/default/lv_theme_default.c"),
+        "lvgl/src/extra/lv_extra.c",
+        "lvgl/src/extra/widgets/tabview/lv_tabview.c",
+        "lvgl/src/extra/widgets/win/lv_win.c",
+        "lvgl/src/extra/widgets/msgbox/lv_msgbox.c",
+        "lvgl/src/extra/widgets/chart/lv_chart.c",
+        "lvgl/src/extra/widgets/spinner/lv_spinner.c",
+        "lvgl/src/extra/widgets/calendar/lv_calendar.c",
+        "lvgl/src/extra/widgets/calendar/lv_calendar_header_arrow.c",
+        "lvgl/src/extra/widgets/calendar/lv_calendar_header_dropdown.c",
+        "lvgl/src/extra/widgets/meter/lv_meter.c",
+        "lvgl/src/extra/widgets/keyboard/lv_keyboard.c",
+        "lvgl/src/extra/widgets/list/lv_list.c",
+        "lvgl/src/extra/widgets/menu/lv_menu.c",
+        //"lvgl/src/extra/widgets/spinbox/lv_spinbox.c"},
+        //"lvgl/src/extra/widgets/tileview/lv_tileview.c"},
+        //"lvgl/src/extra/widgets/colorwheel/lv_colorwheel.c"},
+        //"lvgl/src/extra/widgets/led/lv_led.c"},
+        //"lvgl/src/extra/layouts/grid/lv_grid.c"},
+        "lvgl/src/extra/layouts/flex/lv_flex.c",
+        "lvgl/src/extra/themes/default/lv_theme_default.c",
         // font
-        lvgl.path("src/font/lv_font.c"),
-        lvgl.path("src/font/lv_font_fmt_txt.c"),
-        lvgl.path("src/font/lv_font_montserrat_14.c"),
-        lvgl.path("examples/widgets/menu/lv_example_menu_5.c"),
+        "lvgl/src/font/lv_font.c",
+        "lvgl/src/font/lv_font_fmt_txt.c",
+        "lvgl/src/font/lv_font_montserrat_14.c",
+        "lvgl/examples/widgets/menu/lv_example_menu_5.c",
     };
-    for (lvgl_source_files) |f| {
-        lib.addCSourceFile(.{ .file = f, .flags = &cflags });
-    }
+    //     for (lvgl_source_files) |f| {
+    //         lib.addCSourceFile(.{ .file = f, .flags = &cflags });
+    //     }
+    lib.addCSourceFiles(&lvgl_source_files, &cflags);
 }

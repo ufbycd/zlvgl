@@ -20,10 +20,11 @@ pub const c = @cImport({
             @cDefine("USE_FBDEV", "1");
         },
     }
+
     @cDefine("LV_LVGL_H_INCLUDE_SIMPLE", "1");
     @cDefine("SDL_INCLUDE_PATH", "<SDL2/SDL.h>");
     @cDefine("ZIG", "1");
-    @cInclude("lvgl.h");
+    @cInclude("src/lvgl.h");
     @cInclude("gtkdrv/gtkdrv.h");
     @cInclude("display/fbdev.h");
     @cInclude("indev/evdev.h");

@@ -35,16 +35,22 @@ pub const Align = enum(u8) {
 
 pub const Point = c.lv_point_t;
 pub const Coord = c.lv_coord_t;
+pub const Color = c.lv_color_t;
+pub const ImgCf = c.lv_img_cf_t;
+pub const Opa = c.lv_opa_t;
+pub const Res = c.lv_res_t;
+pub const C_Obj = c.lv_obj_t;
 
 pub const Screen = @import("Screen.zig");
 pub const Obj = @import("Obj.zig");
+pub const Event = @import("Event.zig");
 
 // core widgets
 pub const Arc = @import("Arc.zig");
 pub const Bar = @import("Bar.zig");
 pub const Button = @import("Button.zig");
 // pub const ButtonMatrix = @import("ButtonMatrix.zig");
-// pub const Canvas = @import("Canvas.zig");
+pub const Canvas = @import("Canvas.zig");
 pub const Checkbox = @import("Checkbox.zig");
 pub const Dropdown = @import("Dropdown.zig");
 // pub const Img = @import("Img.zig");
@@ -64,6 +70,8 @@ pub const Anim = @import("Anim.zig");
 
 pub const Flex = @import("Flex.zig");
 
+pub const Style = @import("style.zig");
+
 pub const drivers = @import("drivers.zig");
 
 pub const task = struct {
@@ -81,7 +89,7 @@ pub fn isInitialized() bool {
 }
 
 pub fn deinit() void {
-    // c.lv_deinit();
+    c.lv_deinit();
 }
 
 pub fn pct(value: i16) i16 {
@@ -91,6 +99,12 @@ pub fn pct(value: i16) i16 {
 pub const tick = struct {
     pub fn inc(period: u32) void {
         c.lv_tick_inc(period);
+    }
+};
+
+pub const timer = struct {
+    pub fn handler() u32 {
+        return c.lv_timer_handler();
     }
 };
 

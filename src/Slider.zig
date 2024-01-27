@@ -12,15 +12,15 @@ pub fn init(parent: anytype) Slider {
     };
 }
 
-pub fn setValue(self: Slider, value: i16, anim: lv.AnimEnable) void {
+pub fn setValue(self: Slider, value: i32, anim: lv.AnimEnable) void {
     c.lv_slider_set_value(self.obj, value, @intFromEnum(anim));
 }
 
-pub fn setLeftValue(self: Slider, left_value: i16, anim: lv.AnimEnable) void {
+pub fn setLeftValue(self: Slider, left_value: i32, anim: lv.AnimEnable) void {
     c.lv_slider_set_left_value(self.obj, left_value, @intFromEnum(anim));
 }
 
-pub fn setRange(self: Slider, min: i16, max: i16) void {
+pub fn setRange(self: Slider, min: i32, max: i32) void {
     c.lv_slider_set_range(self.obj, min, max);
 }
 

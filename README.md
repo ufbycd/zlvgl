@@ -14,7 +14,7 @@ _ = btn1.addEventCallback(&_ctx, struct {
     pub fn onClicked(event: anytype) void {
         const the_ctx = event.userData();
         the_ctx.count += 1;
-        std.debug.print("Clicked, {s}: {d}\n", .{ the_ctx.name, the_ctx.count });
+        std.debug.print("Clicked, count: {d}\n", .{ the_ctx.count });
     }
 });
 
@@ -43,8 +43,8 @@ $ zig build run
 ### Platforms
 
 - [x] Linux
-- [] Windows
-- [] Free Standing
+- [ ] Windows
+- [ ] Free Standing
 
 ### Backends
 
@@ -52,55 +52,55 @@ A backend manages display and input.
 
 - [x] SDL2
 - [x] GTK3
-- [] Wayland
-- [] Win32
-- [] Free Standing
+- [ ] Wayland
+- [ ] Win32
+- [ ] Free Standing
 
 ### Displays
 
 - [x] LinuxFB
-- [] DRM
-- [] Custom Display
+- [ ] DRM
+- [ ] Custom Display
 
 ### LVGL Components
 
-- [] Widgets
+- [ ] Widgets
     - [x] Arc
-    - [] Animation Image
+    - [ ] Animation Image
     - [x] Bar
     - [x] Button
-    - [] Button matrix
-    - [] Calendar
-    - [] Chart
+    - [ ] Button matrix
+    - [ ] Calendar
+    - [ ] Chart
     - [x] Canvas
     - [x] Checkbox
-    - [] Drop-down list
-    - [] Image
-    - [] Image button
-    - [] Keyboard
+    - [ ] Drop-down list
+    - [ ] Image
+    - [ ] Image button
+    - [ ] Keyboard
     - [x] Label
-    - [] LED
+    - [ ] LED
     - [x] Line
     - [x] List
-    - [] Menu
-    - [] Message box
-    - [] Roller
-    - [] Scale
+    - [ ] Menu
+    - [ ] Message box
+    - [ ] Roller
+    - [ ] Scale
     - [x] Slider
-    - [] Span
-    - [] Spinbox
-    - [] Spinner
+    - [ ] Span
+    - [ ] Spinbox
+    - [ ] Spinner
     - [x] Switch
     - [x] Table
     - [x] Tabview
-    - [] Text area
-    - [] Tile view
-    - [] Window
+    - [ ] Text area
+    - [ ] Tile view
+    - [ ] Window
 
 - [x] Events
 - [x] Animations
-- [] Styles
-- [] Layouts
-- [] Timers
-- [] Fints
-- [] Images
+- [ ] Styles
+- [ ] Layouts
+- [ ] Timers
+- [ ] Fints
+- [ ] Images

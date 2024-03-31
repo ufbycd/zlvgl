@@ -67,38 +67,38 @@ pub fn ThisEvent(comptime ObjType: type, comptime UserDataType: type) type {
     return struct {
         event: lv.Event,
 
-        pub fn target(self: @This()) ObjType {
-            return ObjType{ .obj = self.event.target().obj };
+        pub fn getTarget(self: @This()) ObjType {
+            return ObjType{ .obj = self.event.getTarget().obj };
         }
 
-        pub fn userData(self: @This()) UserDataType {
-            return self.event.userData(UserDataType);
+        pub fn getUserData(self: @This()) UserDataType {
+            return self.event.getUserData(UserDataType);
         }
 
-        pub fn code(self: @This()) Code {
-            return self.event.code();
+        pub fn getCode(self: @This()) Code {
+            return self.event.getCode();
         }
     };
 }
 
-pub fn target(self: Event) lv.Obj {
+pub fn getTarget(self: Event) lv.Obj {
     return lv.Obj{ .obj = self.e.target.? };
 }
 
-pub fn userData(self: Event, comptime DataType: type) DataType {
+pub fn getUserData(self: Event, comptime DataType: type) DataType {
     return @alignCast(@ptrCast(self.e.user_data));
 }
 
-pub fn param(self: Event, comptime ParamType: type) ParamType {
+pub fn getParam(self: Event, comptime ParamType: type) ParamType {
     return @alignCast(@ptrCast(self.e.param));
 }
 
-pub fn eventId(self: Event) isize {
+pub fn getEventId(self: Event) isize {
     return self.e.*.code;
 }
 
-pub fn code(self: Event) Code {
-    return @enumFromInt(self.eventId());
+pub fn getCode(self: Event) Code {
+    return @enumFromInt(self.getEventId());
 }
 
 pub fn stopBubbling(self: Event) void {

@@ -13,7 +13,7 @@ pub fn example_1() void {
     const btn1 = lv.Button.init(lv.Screen.active());
     _ = btn1.addEventCallback(&_ctx, struct {
         pub fn onClicked(event: anytype) void {
-            const the_ctx = event.userData();
+            const the_ctx = event.getUserData();
             the_ctx.count += 1;
             std.debug.print("Clicked, {s}: {d}\n", .{ the_ctx.name, the_ctx.count });
         }
@@ -27,7 +27,7 @@ pub fn example_1() void {
     const btn2 = lv.Button.init(lv.Screen.active());
     _ = btn2.addEventCallback(null, struct {
         pub fn onValueChanged(event: anytype) void {
-            const target = event.target();
+            const target = event.getTarget();
             std.debug.print("Toggled: {s}\n", .{if (target.hasState(.Checked)) "checked" else "unchecked"});
         }
     });

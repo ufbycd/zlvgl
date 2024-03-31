@@ -99,6 +99,19 @@ pub const Config = struct {
     } = .{},
 };
 
+pub fn addIncludePathsFromDependency(compile: *std.build.Step.Compile, dep: *std.build.Dependency) void {
+    var iter = dep.builder.modules.iterator();
+    while (iter.next()) |item| {
+        const module_name = item.key_ptr.*;
+        const module: *std.build.Module = item.value_ptr.*;
+        if (std.mem.startsWith(u8, module_name, "include.")) {
+            const path = dep.builder.pathFromRoot(module.source_file.path);
+            // std.debug.print("add include path: {s}\n", .{path});
+            compile.addIncludePath(.{ .path = path });
+        }
+    }
+}
+
 pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
@@ -108,7 +121,7 @@ pub fn build(b: *std.build.Builder) !void {
     const config_addr = b.option(usize, "config_addr", "only for direct use as dependency") orelse 0;
     const config: ?*Config = if (config_addr == 0) null else @as(*Config, @ptrFromInt(config_addr));
 
-    //     const lv_drivers = b.dependency("lv_drivers", .{});
+    // const lv_drivers = b.dependency("lv_drivers", .{});
     // const lvgl = b.dependency("lvgl", .{});
 
     const lib = b.addStaticLibrary(.{
@@ -117,6 +130,10 @@ pub fn build(b: *std.build.Builder) !void {
         .optimize = optimize,
         .link_libc = true,
     });
+
+    _ = b.addModule("include.", .{ .source_file = .{ .path = b.pathFromRoot("lvgl") } });
+    _ = b.addModule("include.drivers", .{ .source_file = .{ .path = b.pathFromRoot("lv_drivers") } });
+    _ = b.addModule("include.configs", .{ .source_file = .{ .path = b.pathFromRoot("configs") } });
 
     const module = b.addModule("zlvgl", .{ .source_file = .{ .path = "src/lv.zig" } });
 

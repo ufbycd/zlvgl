@@ -211,12 +211,16 @@ pub fn Functions(comptime Self: type) type {
             }.f;
         }
 
-        pub fn addEventCallback(self: Self, user_data: anytype, comptime Callback: type) ?lv.Event.Callback {
-            const UserDataType = @TypeOf(user_data);
-            var the_user_data: ?*anyopaque = if (UserDataType != @TypeOf(null))
-                @constCast(@ptrCast(user_data))
+        fn asAnyopaquePtr(v: anytype) ?*anyopaque {
+            return if (@TypeOf(v) != @TypeOf(null))
+                @constCast(@ptrCast(v))
             else
                 null;
+        }
+
+        pub fn addEventCallback(self: Self, user_data: anytype, comptime Callback: type) ?lv.Event.Callback {
+            const UserDataType = @TypeOf(user_data);
+            var the_user_data = asAnyopaquePtr(user_data);
 
             inline for (std.meta.fields(lv.Event.Code)) |field| {
                 const callback_name = "on" ++ field.name;
@@ -234,10 +238,7 @@ pub fn Functions(comptime Self: type) type {
         pub fn addEventCallbacks(self: Self, user_data: anytype, comptime Callbacks: type) usize {
             var added_count: usize = 0;
             const UserDataType = @TypeOf(user_data);
-            var the_user_data: ?*anyopaque = if (UserDataType != @TypeOf(null))
-                @constCast(@ptrCast(user_data))
-            else
-                null;
+            var the_user_data = asAnyopaquePtr(user_data);
 
             inline for (std.meta.fields(lv.Event.Code)) |field| {
                 const callback_name = "on" ++ field.name;
@@ -254,6 +255,11 @@ pub fn Functions(comptime Self: type) type {
 
         pub fn removeEventCallback(self: Self, callback: ?lv.Event.Callback) bool {
             return c.lv_obj_remove_event_cb(self.obj, callback);
+        }
+
+        pub fn removeEventCallbackWithUserData(self: Self, callback: ?lv.Event.Callback, user_data: anytype) bool {
+            const the_user_data = asAnyopaquePtr(user_data);
+            return c.lv_obj_remove_event_cb_with_user_data(self.obj, callback, the_user_data);
         }
     };
 }
